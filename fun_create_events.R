@@ -117,11 +117,11 @@ create_events<- function(df,
         #' column of the unique id
         mutate(active = as.numeric(.data[[event_var]] > event_var_threshold)) %>%
         # uniquely identify geographic points by the specified combination of metadata_coords
-        unite("unique_id", {{ unique_id_coords }}, remove = FALSE) %>%
+        unite("unique_id", all_of(unique_id_coords), remove = FALSE) %>%
         group_by(unique_id) %>%
-        # number events at each geographic point
-        mutate(event_number = {r <- rle(active)
-        r$values <- cumsum(r$values) * r$values
+        #number events at each geographic point
+        mutate(event_number = {r <- rle(active);
+        r$values <- cumsum(r$values) * r$values;
         inverse.rle(r)
         }
         ) %>%
@@ -130,18 +130,19 @@ create_events<- function(df,
         filter(active == 1) %>%
         group_by(interaction(unique_id, event_number)) %>%
         mutate(event_length = sum(active, na.rm = TRUE)) %>%
-        summarize(
-          unique_id = unique_id,
-          total = sum(.data[[event_var]] - event_var_threshold),
-          max_rate = max(.data[[event_var]] - event_var_threshold),
-          length = min(event_length),
-          event_number = min(event_number),
-          #event_number = min(event_number, na.rm = TRUE),
-          across({{metadata_coords}}, ~min(., na.rm = TRUE))
-        ) %>%
-        ungroup() %>%
-        unique()
+          summarize(
+             unique_id = unique_id,
+             total = sum(.data[[event_var]] - event_var_threshold),
+             max_rate = max(.data[[event_var]] - event_var_threshold),
+             length = min(event_length),
+              event_number = min(event_number),
+             event_number = min(event_number, na.rm = TRUE),
+             across({{metadata_coords}}, ~min(., na.rm = TRUE))
+           ) %>%
+          ungroup() %>%
+          unique()
       return(df[,-1]) # return data.frame without ugly grouping variable
+      #return(df)
     }
     else {
       df <- df %>%
@@ -186,10 +187,12 @@ create_events<- function(df,
         # uniquely identify geographic points by the specified combination of metadata_coords
         unite("unique_id", {{ unique_id_coords }}, remove = FALSE) %>%
         group_by(unique_id) %>%
+        # calculate "active" threhold for each unique point
+        mutate(calc_event_var_threshold = quantile(x = .data[[event_var]],
+                                                   probs = event_var_threshold)) %>%
         # mark time increments as during an event "active" or not; specify a
         #' column of the unique id
-        mutate(active = as.numeric(.data[[event_var]] > quantile(x = .data[[event_var]],
-                                                                 probs = event_var_threshold))) %>%
+        mutate(active = as.numeric(.data[[event_var]] > calc_event_var_threshold)) %>%
         # number events at each geographic point
         mutate(event_number = {r <- rle(active)
         r$values <- cumsum(r$values) * r$values
@@ -203,11 +206,12 @@ create_events<- function(df,
         mutate(event_length = sum(active, na.rm = TRUE)) %>%
         summarize(
           unique_id = unique_id,
-          total = sum(.data[[event_var]] - event_var_threshold),
-          max_rate = max(.data[[event_var]] - event_var_threshold),
+          event_var_threshold = min(calc_event_var_threshold),
+          total = sum(.data[[event_var]] - calc_event_var_threshold),
+          max_rate = max(.data[[event_var]] - calc_event_var_threshold),
           length = min(event_length),
-          event_number = min(event_number),
-          #event_number = min(event_number, na.rm = TRUE),
+          #event_number = min(event_number),
+          event_number = min(event_number, na.rm = TRUE),
           across({{metadata_coords}}, ~min(., na.rm = TRUE))
         ) %>%
         ungroup() %>%
@@ -221,10 +225,12 @@ create_events<- function(df,
         # uniquely identify geographic points by the specified combination of metadata_coords
         unite("unique_id", {{ unique_id_coords }}, remove = FALSE) %>%
         group_by(unique_id) %>%
+        # calculate "active" threhold for each unique point
+        mutate(calc_event_var_threshold = quantile(x = .data[[event_var]],
+                                                   probs = event_var_threshold)) %>%
         # mark time increments as during an event "active" or not; specify a
         #' column of the unique id
-        mutate(active = as.numeric(.data[[event_var]] < quantile(x = .data[[event_var]],
-                                                                 probs = event_var_threshold))) %>%
+        mutate(active = as.numeric(.data[[event_var]] < calc_event_var_threshold)) %>%
         # number events at each geographic point
         mutate(event_number = {r <- rle(active)
         r$values <- cumsum(r$values) * r$values
@@ -238,11 +244,12 @@ create_events<- function(df,
         mutate(event_length = sum(active, na.rm = TRUE)) %>%
         summarize(
           unique_id = unique_id,
+          event_var_threshold = min(calc_event_var_threshold),
           total = sum(.data[[event_var]] - event_var_threshold),
           max_rate = min(.data[[event_var]]) - event_var_threshold,
           length = min(event_length),
-          event_number = min(event_number),
-          #event_number = min(event_number, na.rm = TRUE),
+          #event_number = min(event_number),
+          event_number = min(event_number, na.rm = TRUE),
           across({{metadata_coords}}, ~min(., na.rm = TRUE))
         ) %>%
         ungroup() %>%
