@@ -252,4 +252,3 @@ create_events<- function(df,
   }
   
 }
-
