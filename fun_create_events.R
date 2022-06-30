@@ -250,5 +250,4 @@ create_events<- function(df,
       return(df[,-1]) # return data.frame without ugly grouping variable
     }
   }
-  
 }
