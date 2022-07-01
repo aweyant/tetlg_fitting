@@ -4,22 +4,14 @@ library(tidync)
 # Load needed functions ---------------------------------------------------
 source(file = "fun_create_events.R")
 
-
 # Load and wrangle test file ----------------------------------------------
-prec_1915_df <- tidync(x = "./data/livneh_unsplit/prec.1915.nc") %>%
-  hyper_filter(lon = index %in% (0:2)) %>%
-  hyper_filter(lon = index %in% (0:2)) %>%
+complete_prec_df <- tidync(x = "./data/livneh_unsplit/complete.prec.nc") %>%
+  hyper_filter(lat = (lat == lat_v[100])) %>%
+  #hyper_filter(lat = (lat == lat_v[100])) %>%
   hyper_tibble()
 
 # Apply create_events function --------------------------------------------
-ev <- "prec"
-uic <- c("lat", "lon")
-prec_1915_df %>%  
-  filter(!is.na(.data[[ev]])) %>%
-  unite("unique_id", {{ uic }}, remove = FALSE) %>%
-  group_by(unique_id) 
-
-prec_1915_events_df <- create_events(df = prec_1915_df,
+complete_prec_events_df <- create_events(df = complete_prec_df,
                                      unique_id_coords = c("lon", "lat"),
                                      metadata_coords = c("lon", "lat", "time"),
                                      event_var = "prec",
@@ -27,3 +19,9 @@ prec_1915_events_df <- create_events(df = prec_1915_df,
                                      event_var_threshold = 0.95,
                                      inequality_direction = "greater",
                                      event_var_threshold_type = "percentile")
+
+
+# Scratch -----------------------------------------------------------------
+complete_prec_nc <- tidync(x = "./data/livneh_unsplit/complete.prec.nc")
+lat_v <- (complete_prec_nc %>% activate("D0") %>% hyper_array())$lat
+lon_v <- (complete_prec_nc %>% activate("D1") %>% hyper_array())$lon
