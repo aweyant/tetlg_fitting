@@ -14,6 +14,8 @@ complete_prec_nc <- tidync(x = "./data/livneh_unsplit/complete.prec.nc")
 lat_v <- (complete_prec_nc %>% activate("D0") %>% hyper_array())$lat
 lon_v <- (complete_prec_nc %>% activate("D1") %>% hyper_array())$lon
 
+
+# Apply create_events() function ------------------------------------------
 N = 100
 for(i in 1:length(lon_v)) {
   for(j in seq(from = 1, to = length(lat_v) - (N-1), by = N)) {
@@ -34,22 +36,17 @@ for(i in 1:length(lon_v)) {
 }
 
 
-# Apply create_events function --------------------------------------------
-ev <- "prec"
-uic <- c("lat", "lon")
-prec_1915_df %>%  
-  filter(!is.na(.data[[ev]])) %>%
-  unite("unique_id", {{ uic }}, remove = FALSE) %>%
-  group_by(unique_id) 
+# Rename columns ----------------------------------------------------------
+colnames(complete_prec_events_df) <- c("unique_id",
+                                       "total",
+                                       "max_rate",
+                                       "length",
+                                       "event_number",
+                                       "lon", "lat", "time")
 
-complete_prec_events_df <- create_events(df = complete_prec_df,
-                                         unique_id_coords = c("lon", "lat"),
-                                         metadata_coords = c("lon", "lat", "time"),
-                                         event_var = "prec",
-                                         event_func = "sum",
-                                         event_var_threshold = 0.95,
-                                         inequality_direction = "greater",
-                                         event_var_threshold_type = "percentile")
+write_csv(x = complete_prec_events_df,
+          file = "./data/livneh_unsplit/complete_prec_events.csv")
+
 
 
 
