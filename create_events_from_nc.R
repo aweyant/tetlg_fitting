@@ -21,7 +21,7 @@ for(i in 1:length(lon_v)) {
   for(j in seq(from = 1, to = length(lat_v) - (N-1), by = N)) {
     complete_prec_events_df <- tidync(x = "./data/livneh_unsplit/complete.prec.nc") %>%
       hyper_filter(lon = (lon == lon_v[i])) %>%
-      hyper_filter(lat = (lat %in% lat_v[j:j+15])) %>%
+      hyper_filter(lat = (lat %in% lat_v[j:j+(N-1)])) %>%
       hyper_tibble() %>%
       create_events(unique_id_coords = c("lon", "lat"),
                     metadata_coords = c("lon", "lat", "time"),
@@ -38,14 +38,14 @@ for(i in 1:length(lon_v)) {
 
 # Rename columns ----------------------------------------------------------
 colnames(complete_prec_events_df) <- c("unique_id",
+                                       "event_var_threshold",
                                        "total",
                                        "max_rate",
                                        "length",
                                        "event_number",
                                        "lon", "lat", "time")
 
-write_csv(x = complete_prec_events_df,
-          file = "./data/livneh_unsplit/complete_prec_events.csv")
+write_csv(x = complete_prec_events_df, file = "./data/livneh_unsplit/complete_prec_events.csv")
 
 
 
