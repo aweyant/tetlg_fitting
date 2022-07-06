@@ -43,6 +43,7 @@ for(i in (length(lon_v):1)) {
 
 
 # Rename columns ----------------------------------------------------------
+
 colnames(complete_prec_events_df) <- c("unique_id",
                                        "event_var_threshold",
                                        "total",
