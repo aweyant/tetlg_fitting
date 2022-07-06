@@ -16,12 +16,15 @@ lon_v <- (complete_prec_nc %>% activate("D1") %>% hyper_array())$lon
 
 
 # Apply create_events() function ------------------------------------------
-N = 100
-for(i in 1:length(lon_v)) {
-  for(j in seq(from = 1, to = length(lat_v) - (N-1), by = N)) {
+#N = 20
+for(i in (length(lon_v):1)) {
+#for(i in 1:1) {
+  start_time <- Sys.time()
+  #for(j in seq(from = 1, to = length(lat_v) - (N-1), by = N)) {
+    #print(lat_v[j:(j+(N-1))])
     complete_prec_events_df <- tidync(x = "./data/livneh_unsplit/complete.prec.nc") %>%
       hyper_filter(lon = (lon == lon_v[i])) %>%
-      hyper_filter(lat = (lat %in% lat_v[j:j+(N-1)])) %>%
+      #hyper_filter(lat = (lat %in% lat_v[j:j+(N-1)])) %>%
       hyper_tibble() %>%
       create_events(unique_id_coords = c("lon", "lat"),
                     metadata_coords = c("lon", "lat", "time"),
@@ -31,7 +34,10 @@ for(i in 1:length(lon_v)) {
                     inequality_direction = "greater",
                     event_var_threshold_type = "percentile") %>%
       write_csv(file = "./data/livneh_unsplit/complete.prec.events.csv", append = TRUE)
-  }
+    gc()
+    end_time <- Sys.time()
+    print(end_time-start_time)
+  #}
   print(paste0("Progress: ", signif(100 * i/length(lon_v), digits = 2), "%"))
 }
 
