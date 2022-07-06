@@ -129,6 +129,10 @@ ggplot(data = world) +
 
 ![](fit_parameters_to_livneh_precip_files/figure-gfm/p_hat_precip_map-1.png)<!-- -->
 
+*Note: ignoring the effect of q, a smaller p implies that events are
+longer. We can loosely think of the above colorscale as representing
+“event shortness”*
+
 ``` r
 ggplot(data = world) +
   geom_contour(data = prec_event_parameters %>%
@@ -147,7 +151,7 @@ ggplot(data = world) +
            ylim = c(lat_min, lat_max),
            #ylim = c(26, lat_max),
            expand = FALSE) +
-  guides(fill = guide_colorsteps(title = paste0("\U3B2_hat"))) +
+  guides(fill = guide_colorsteps(title = paste0("\U3B2_hat [1/mm]"))) +
   labs(title = "Estimated \U3B2") +
   theme_bw()
 ```
@@ -174,7 +178,7 @@ ggplot(data = world) +
            ylim = c(lat_min, lat_max),
            #ylim = c(26, lat_max),
            expand = FALSE) +
-  guides(fill = guide_colorsteps(title = paste0("(\U3B2_hat)^(-1)"))) +
+  guides(fill = guide_colorsteps(title = paste0("(\U3B2_hat)^(-1) [mm]"))) +
   labs(title = "Estimated Mean P.O.T. Precipitation") +
   theme_bw()
 ```
