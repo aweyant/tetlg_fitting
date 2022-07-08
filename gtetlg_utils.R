@@ -28,7 +28,7 @@ rhgeom <- function(n, q, p) {
   return((rbinom(n,1,1-q) * (rgeom(n,p)+1)) + 1)
 }
 
-rgtetlg <- function(n,q,p,b,rounding = TRUE) {
+rgtetlg <- function(n,q,p,b,rounding = FALSE) {
   event_length = rhgeom(n,q,p)
   increment_totals = matrix(nrow = n, ncol = max(event_length))
   for(i in 1:n) {
