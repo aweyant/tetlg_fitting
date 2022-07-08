@@ -48,10 +48,10 @@ complete_prec_events_df <- read_csv("./data/livneh_unsplit/complete_prec_events.
 
 # Declare constants -------------------------------------------------------
 world <- ne_countries(returnclass = "sf")
-lon_min <- complete_prec_events_df$lon %>% min()
-lon_max<- complete_prec_events_df$lon %>% max()
-lat_min <- complete_prec_events_df$lat %>% min()
-lat_max <- complete_prec_events_df$lat %>% max()
+lon_min <- 246#complete_prec_events_df$lon %>% min()
+lon_max<- 247#complete_prec_events_df$lon %>% max()
+lat_min <- 32#complete_prec_events_df$lat %>% min()
+lat_max <- 33#complete_prec_events_df$lat %>% max()
 
 #' *Event Length Hurdle Geometric Goodness-of-Fit*
 chisq_n_df <- read_csv("./data/chisq_n.csv", col_names = FALSE) %>%

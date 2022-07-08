@@ -9,8 +9,9 @@
 # Load packages -----------------------------------------------------------
 library(tidyverse)
 library(cramer)
-library(Peacock.test)
+#library(Peacock.test)
 library(fasano.franceschini.test)
+library(twosamples)
 
 # Load auxiliary functions ------------------------------------------------
 source("./gtetlg_utils.R")
@@ -50,12 +51,12 @@ generated_prec_events_df <- read_csv("./data/livneh_unsplit/generated_prec_event
   rename(length = event_length)
 
 
-
-#' *Benchmarks*
-
-# Trivariate --------------------------------------------------------------
+# Declare constants -------------------------------------------------------
 test_lengths <- c(1,5,10)
 unique_id_v <- complete_prec_events_df$unique_id %>% unique()
+
+#' *Benchmarks*
+# Trivariate --------------------------------------------------------------
 
 
 #' *Fasano-Franceschni*
@@ -165,7 +166,80 @@ write_csv(x = benchmark_results_df,
           file = "./data/goodness_of_fit_benchmark_results.csv")
 
 
+
+
+# Event Total -------------------------------------------------------------
+#' *dts test*
+dts_v <- numeric()
+for(i in test_lengths) {
+  start_time <- Sys.time()
+  lapply(X = unique_id_v[1:i],
+         FUN = function(id) {
+           (dts_test(a = complete_prec_events_df %>%
+                       filter(unique_id == id) %>%
+                       select(total) %>%
+                       as.matrix(),
+                     b = generated_prec_events_df %>%
+                       filter(unique_id == id) %>%
+                       select(event_magnitude) %>%
+                       as.matrix(),
+                     nboots = 1000))[2] %>%
+             as.data.frame() %>%
+             mutate(unique_id = id#,
+                    #lat = (complete_prec_events_df %>% filter(unique_id == id))$lat[1],
+                    #lon = (complete_prec_events_df %>% filter(unique_id == id))$lon[1]
+             )
+         }) %>%
+    bind_rows() %>%
+    write_csv(file = "./data/dts_x.csv")
+  end_time <- Sys.time()
+  dts_v[i] <- as.numeric(difftime(end_time, start_time), units = "secs")
+  print(paste0("DTS Test of size ", i, " completed..."))
+}
+dts_v <- dts_v %>% na.omit()
+benchmark_results_df$dts_time <- dts_v
+# write_csv(x = benchmark_results_df,
+#           file = "./data/goodness_of_fit_benchmark_results.csv")
+
+# Event Total -------------------------------------------------------------
+
+
 # Scratch work ------------------------------------------------------------
+
+id = unique_id_v[10000]
+dts_object <- dts_test(a = complete_prec_events_df %>%
+                         filter(unique_id == id) %>%
+                         select(total) %>%
+                         as.matrix(),
+                       b = generated_prec_events_df %>%
+                         filter(unique_id == id) %>%
+                         select(event_magnitude) %>%
+                         as.matrix(),
+                       nboots = 1000)
+
+plot(density(complete_prec_events_df %>%
+               filter(unique_id == id) %>%
+               select(total) %>%
+               as.matrix()),
+     col = "red")
+
+lines(density(generated_prec_events_df %>%
+               filter(unique_id == id) %>%
+               select(event_magnitude) %>%
+               as.matrix()),
+      col = "blue")
+
+
+
+ks_object <- ks_test(a = complete_prec_events_df %>%
+                       filter(unique_id == id) %>%
+                       select(total) %>%
+                       as.matrix(),
+                     b = generated_prec_events_df %>%
+                       filter(unique_id == id) %>%
+                       select(event_magnitude) %>%
+                       as.matrix(),
+                     nboots = 1000)
 
 
 id = unique_id_v[1]

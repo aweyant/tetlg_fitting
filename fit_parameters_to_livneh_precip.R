@@ -169,3 +169,4 @@ ggplot(data = world) +
   guides(fill = guide_colorsteps(title = paste0("Relative Exceedance"))) +
   labs(title = "Estimated Mean P.O.T. Precipitation\nRelative to 95th Percentile") +
   theme_bw()
+
