@@ -143,3 +143,29 @@ ggplot(data = world) +
   guides(fill = guide_colorsteps(title = paste0("(\U3B2_hat)^(-1) [mm]"))) +
   labs(title = "Estimated Mean P.O.T. Precipitation") +
   theme_bw()
+
+#+ mean_peak_over_threshold_precip_relative_map
+ggplot(data = world) +
+  geom_contour(data = prec_event_parameters %>%
+                 na.omit() %>%
+                 mutate(mean_POT = (1/b_hat)/event_var_threshold) %>%
+                 filter(mean_POT <= 15),
+               aes(x = lon,
+                   y = lat,
+                   z = mean_POT)) +
+  geom_contour_fill(data = prec_event_parameters %>%
+                      na.omit() %>%
+                      mutate(mean_POT = (1/b_hat)/event_var_threshold) %>%
+                      filter(mean_POT <= 15),
+                    aes(x = lon,
+                        y = lat,
+                        z = mean_POT)) +
+  scale_fill_viridis_c(option = "cividis") +
+  geom_sf(fill = NA) +
+  coord_sf(xlim = c(lon_min, lon_max),
+           ylim = c(lat_min, lat_max),
+           #ylim = c(26, lat_max),
+           expand = FALSE) +
+  guides(fill = guide_colorsteps(title = paste0("Relative Exceedance"))) +
+  labs(title = "Estimated Mean P.O.T. Precipitation\nRelative to 95th Percentile") +
+  theme_bw()

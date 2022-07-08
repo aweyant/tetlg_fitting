@@ -1,7 +1,7 @@
 A First Look of GTETLG Applied to Daily Precipitation!
 ================
 alexander
-2022-07-06
+2022-07-08
 
 First, some setup code
 
@@ -24,7 +24,7 @@ complete_prec_events_df <- read_csv("./data/livneh_unsplit/complete_prec_events.
 ```
 
     ## Rows: 78794968 Columns: 9
-    ## ── Column specification ───────────────────────────────────────────────────────────────────────────────────────────
+    ## ── Column specification ───────────────────────────────────────────────────────────────────────────────
     ## Delimiter: ","
     ## chr (1): unique_id
     ## dbl (8): event_var_threshold, total, max_rate, length, event_number, lon, lat, time
@@ -60,7 +60,7 @@ prec_event_parameters <- read_csv(file = "./data/prec_event_parameters.csv")
 ```
 
     ## Rows: 55365 Columns: 8
-    ## ── Column specification ───────────────────────────────────────────────────────────────────────────────────────────
+    ## ── Column specification ───────────────────────────────────────────────────────────────────────────────
     ## Delimiter: ","
     ## chr (1): unique_id
     ## dbl (7): lat, lon, event_var_threshold, n_events, q_hat, p_hat, b_hat
@@ -184,3 +184,32 @@ ggplot(data = world) +
 ```
 
 ![](fit_parameters_to_livneh_precip_files/figure-gfm/mean_peak_over_threshold_precip_map-1.png)<!-- -->
+
+``` r
+ggplot(data = world) +
+  geom_contour(data = prec_event_parameters %>%
+                 na.omit() %>%
+                 mutate(mean_POT = (1/b_hat)/event_var_threshold) %>%
+                 filter(mean_POT <= 15),
+               aes(x = lon,
+                   y = lat,
+                   z = mean_POT)) +
+  geom_contour_fill(data = prec_event_parameters %>%
+                      na.omit() %>%
+                      mutate(mean_POT = (1/b_hat)/event_var_threshold) %>%
+                      filter(mean_POT <= 15),
+                    aes(x = lon,
+                        y = lat,
+                        z = mean_POT)) +
+  scale_fill_viridis_c(option = "cividis") +
+  geom_sf(fill = NA) +
+  coord_sf(xlim = c(lon_min, lon_max),
+           ylim = c(lat_min, lat_max),
+           #ylim = c(26, lat_max),
+           expand = FALSE) +
+  guides(fill = guide_colorsteps(title = paste0("Relative Exceedance"))) +
+  labs(title = "Estimated Mean P.O.T. Precipitation\nRelative to 95th Percentile") +
+  theme_bw()
+```
+
+![](fit_parameters_to_livneh_precip_files/figure-gfm/mean_peak_over_threshold_precip_relative_map-1.png)<!-- -->
