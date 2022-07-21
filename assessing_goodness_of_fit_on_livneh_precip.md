@@ -1,13 +1,14 @@
 GTETLG Goodness of Fit on Livneh (Unsplit) Precipitation
 ================
 alexander
-2022-07-08
+2022-07-21
 
 First, the setup (boring)
 
 ``` r
 # Load packages -----------------------------------------------------------
 library(tidyverse)
+library(lattice)
 library(rnaturalearth)
 library(rnaturalearthdata)
 library(metR)
@@ -22,8 +23,8 @@ source("./gtetlg_utils.R")
 complete_prec_events_df <- read_csv("./data/livneh_unsplit/complete_prec_events.csv")
 ```
 
-    ## Rows: 78794968 Columns: 9
-    ## ── Column specification ───────────────────────────────────────────────────────────────────────────────
+    ## Rows: 78787511 Columns: 9
+    ## ── Column specification ─────────────────────────────────────────────────────────────────────────────────────────────────
     ## Delimiter: ","
     ## chr (1): unique_id
     ## dbl (8): event_var_threshold, total, max_rate, length, event_number, lon, lat, time
@@ -32,13 +33,23 @@ complete_prec_events_df <- read_csv("./data/livneh_unsplit/complete_prec_events.
     ## ℹ Specify the column types or set `show_col_types = FALSE` to quiet this message.
 
 ``` r
-# prec_event_parameters_df <- read_csv("./data/prec_event_parameters.csv") %>%
-#   rename(n = n_events,
-#          q = q_hat,
-#          p = p_hat,
-#          b = b_hat)
+prec_event_parameters_df <- read_csv("./data/prec_event_parameters.csv") %>%
+  rename(n = n_events,
+         q = q_hat,
+         p = p_hat,
+         b = b_hat)
+```
 
+    ## Rows: 55374 Columns: 8
+    ## ── Column specification ─────────────────────────────────────────────────────────────────────────────────────────────────
+    ## Delimiter: ","
+    ## chr (1): unique_id
+    ## dbl (7): lat, lon, event_var_threshold, n_events, q_hat, p_hat, b_hat
+    ## 
+    ## ℹ Use `spec()` to retrieve the full column specification for this data.
+    ## ℹ Specify the column types or set `show_col_types = FALSE` to quiet this message.
 
+``` r
 # Generate precip events from estimated parameters ------------------------
 # generated_prec_events_df <- apply(X = prec_event_parameters_df,
 #                                   FUN = function(row) {
@@ -58,18 +69,38 @@ complete_prec_events_df <- read_csv("./data/livneh_unsplit/complete_prec_events.
 # write_csv(x = generated_prec_events_df,
 #           file = "./data/livneh_unsplit/generated_prec_events.csv")
 
-# Declare constants -------------------------------------------------------
-world <- ne_countries(returnclass = "sf")
-lon_min <- complete_prec_events_df$lon %>% min()
-lon_max<- complete_prec_events_df$lon %>% max()
-lat_min <- complete_prec_events_df$lat %>% min()
-lat_max <- complete_prec_events_df$lat %>% max()
+generated_prec_events_df <- read_csv(file = "./data/livneh_unsplit/generated_prec_events.csv")
 ```
 
-*Event Length Hurdle Geometric Goodness-of-Fit*
+    ## Rows: 79070045 Columns: 7
+    ## ── Column specification ─────────────────────────────────────────────────────────────────────────────────────────────────
+    ## Delimiter: ","
+    ## chr (1): unique_id
+    ## dbl (6): gen_length, gen_total, gen_max, lat, lon, event_number
+    ## 
+    ## ℹ Use `spec()` to retrieve the full column specification for this data.
+    ## ℹ Specify the column types or set `show_col_types = FALSE` to quiet this message.
 
 ``` r
-chisq_n_df <- read_csv("./data/chisq_n.csv", col_names = FALSE) %>%
+# Declare constants -------------------------------------------------------
+world <- ne_countries(returnclass = "sf")
+#lon_min <- 246
+lon_min <- complete_prec_events_df$lon %>% min()
+#lon_max<- 247
+lon_max <- complete_prec_events_df$lon %>% max()
+#lat_min <- 32
+lat_min <- complete_prec_events_df$lat %>% min()
+#lat_max <- 33
+lat_max <- complete_prec_events_df$lat %>% max()
+
+
+# Event length ------------------------------------------------------------
+```
+
+**Event Length Hurdle Geometric Goodness-of-Fit**
+
+``` r
+chisq_n_df <- read_csv("./data/chisq_n_mt.csv", col_names = FALSE) %>%
   rename('p_val' = 'X1', 'unique_id' = 'X2') %>%
   separate(col = unique_id,
            into = c("lon", "lat"),
@@ -77,8 +108,8 @@ chisq_n_df <- read_csv("./data/chisq_n.csv", col_names = FALSE) %>%
            convert= TRUE)
 ```
 
-    ## Rows: 27000 Columns: 2
-    ## ── Column specification ───────────────────────────────────────────────────────────────────────────────
+    ## Rows: 55415 Columns: 2
+    ## ── Column specification ─────────────────────────────────────────────────────────────────────────────────────────────────
     ## Delimiter: ","
     ## chr (1): X2
     ## dbl (1): X1
@@ -87,13 +118,97 @@ chisq_n_df <- read_csv("./data/chisq_n.csv", col_names = FALSE) %>%
     ## ℹ Specify the column types or set `show_col_types = FALSE` to quiet this message.
 
 ``` r
+# ggplot(data = world) +
+#   geom_contour(data = chisq_n_df %>%
+#                  na.omit(),
+#                aes(x = lon,
+#                    y = lat,
+#                    z = p_val)) +
+#   geom_contour_fill(data = chisq_n_df %>%
+#                       na.omit(),
+#                     aes(x = lon,
+#                         y = lat,
+#                         z = p_val)) +
+#   # geom_tile(data = chisq_n_df %>%
+#   #             na.omit(),
+#   #           aes(x = lon,
+#   #               y = lat,
+#   #               colour = p_val)) +
+#   scale_fill_viridis_c(option = "cividis") +
+#   #scale_color_viridis_c(option = "cividis") +
+#   geom_sf(fill = NA) +
+#   coord_sf(xlim = c(lon_min, lon_max),
+#            ylim = c(lat_min, lat_max),
+#            #ylim = c(26, lat_max),
+#            expand = FALSE) +
+#   guides(fill = guide_colorsteps(title = paste0("p"))) +
+#   labs(title = "Chisq p-vals for\n Fitted Event Length Dist.") +
+#   theme_bw()
+```
+
+``` r
 ggplot(data = world) +
-  geom_contour(data = chisq_n_df %>%
+  # geom_contour(data = chisq_n_df %>%
+  #                na.omit(),
+  #              aes(x = lon,
+  #                  y = lat,
+  #                  z = p_val)) +
+  # geom_contour_fill(data = chisq_n_df %>%
+  #                     na.omit(),
+  #                   aes(x = lon,
+  #                       y = lat,
+  #                       z = p_val)) +
+  # geom_tile(data = chisq_n_df %>%
+  #             na.omit(),
+  #           aes(x = lon,
+  #               y = lat,
+  #               colour = p_val)) +
+  geom_point(data = chisq_n_df %>%
+              na.omit(),
+            aes(x = lon,
+                y = lat,
+                colour = p_val)) +
+  
+  #scale_fill_viridis_c(option = "cividis") +
+  scale_color_viridis_c(option = "cividis") +
+  geom_sf(fill = NA) +
+  coord_sf(xlim = c(lon_min, lon_max),
+           ylim = c(lat_min, lat_max),
+           #ylim = c(26, lat_max),
+           expand = FALSE) +
+  guides(fill = guide_colorsteps(title = paste0("p"))) +
+  labs(title = "Chisq p-Values for\n Fitted Hurdle Geometric") +
+  theme_bw()
+```
+
+![](assessing_goodness_of_fit_on_livneh_precip_files/figure-gfm/goodness_of_fit_chisq_event_length_tile_map-1.png)<!-- -->
+
+``` r
+# Event total -------------------------------------------------------------
+```
+
+**Event Total Exponential Goodness-of-fit**
+
+``` r
+dts_x_df <- read_csv("./data/dts_x_mt.csv", col_names = c("p_val", "lon", "lat"))
+```
+
+    ## Rows: 55374 Columns: 3
+    ## ── Column specification ─────────────────────────────────────────────────────────────────────────────────────────────────
+    ## Delimiter: ","
+    ## dbl (3): p_val, lon, lat
+    ## 
+    ## ℹ Use `spec()` to retrieve the full column specification for this data.
+    ## ℹ Specify the column types or set `show_col_types = FALSE` to quiet this message.
+
+``` r
+ggplot(data = world) +
+  geom_contour(data = dts_x_df %>%
                  na.omit(),
                aes(x = lon,
                    y = lat,
                    z = p_val)) +
-  geom_contour_fill(data = chisq_n_df %>%
+  geom_contour_fill(data = dts_x_df %>%
                       na.omit(),
                     aes(x = lon,
                         y = lat,
@@ -111,42 +226,117 @@ ggplot(data = world) +
            #ylim = c(26, lat_max),
            expand = FALSE) +
   guides(fill = guide_colorsteps(title = paste0("p"))) +
-  labs(title = "Chisq p-Values for\n Fitted Hurdle Geometric") +
+  labs(title = "DTS p-vals for\n Fitted Total Dist.") +
   theme_bw()
 ```
 
-![](assessing_goodness_of_fit_on_livneh_precip_files/figure-gfm/goodness_of_fit_chisq_event_length_map-1.png)<!-- -->
+![](assessing_goodness_of_fit_on_livneh_precip_files/figure-gfm/goodness_of_fit_dts_event_total_map-1.png)<!-- -->
+
+``` r
+# Event Max ---------------------------------------------------------------
+```
+
+**Event Max Exponential Goodness-of-fit**
+
+``` r
+dts_y_df <- read_csv("./data/dts_y_mt.csv", col_names = c("p_val", "unique_id")) %>%
+  separate(col = unique_id,
+           into = c("lon", "lat"),
+           sep = "_",
+           convert= TRUE) %>%
+  na.omit()
+```
+
+    ## Rows: 55374 Columns: 2
+    ## ── Column specification ─────────────────────────────────────────────────────────────────────────────────────────────────
+    ## Delimiter: ","
+    ## chr (1): unique_id
+    ## dbl (1): p_val
+    ## 
+    ## ℹ Use `spec()` to retrieve the full column specification for this data.
+    ## ℹ Specify the column types or set `show_col_types = FALSE` to quiet this message.
 
 ``` r
 ggplot(data = world) +
-  # geom_contour(data = chisq_n_df %>%
-  #                na.omit(),
-  #              aes(x = lon,
-  #                  y = lat,
-  #                  z = p_val)) +
-  # geom_contour_fill(data = chisq_n_df %>%
-  #                     na.omit(),
-  #                   aes(x = lon,
-  #                       y = lat,
-  #                       z = p_val)) +
-  geom_tile(data = chisq_n_df %>%
-              na.omit(),
-            aes(x = lon,
-                y = lat,
-                colour = p_val)) +
-  #scale_fill_viridis_c(option = "cividis") +
-  scale_color_viridis_c(option = "cividis") +
+  geom_contour(data = dts_y_df %>%
+                 na.omit(),
+               aes(x = lon,
+                   y = lat,
+                   z = p_val)) +
+  geom_contour_fill(data = dts_y_df %>%
+                      na.omit(),
+                    aes(x = lon,
+                        y = lat,
+                        z = p_val)) +
+  # geom_tile(data = chisq_n_df %>%
+  #             na.omit(),
+  #           aes(x = lon,
+  #               y = lat,
+  #               colour = p_val)) +
+  scale_fill_viridis_c(option = "cividis") +
+  #scale_color_viridis_c(option = "cividis") +
   geom_sf(fill = NA) +
   coord_sf(xlim = c(lon_min, lon_max),
            ylim = c(lat_min, lat_max),
            #ylim = c(26, lat_max),
            expand = FALSE) +
   guides(fill = guide_colorsteps(title = paste0("p"))) +
-  labs(title = "Chisq p-Values for\n Fitted Hurdle Geometric") +
+  labs(title = "DTS p-vals for\n Fitted Max. Dist.") +
   theme_bw()
 ```
 
-![](assessing_goodness_of_fit_on_livneh_precip_files/figure-gfm/goodness_of_fit_chisq_event_length_tile_map-1.png)<!-- -->
+![](assessing_goodness_of_fit_on_livneh_precip_files/figure-gfm/goodness_of_fit_dts_event_max_map-1.png)<!-- -->
+
+``` r
+# Daily Exceedance --------------------------------------------------------
+```
+
+**Daily Exceedance Goodness-of-fit**
+
+``` r
+dts_exceedance_df <- read_csv("./data/dts_exceedance.csv", col_names = TRUE)
+```
+
+    ## Rows: 55365 Columns: 3
+    ## ── Column specification ─────────────────────────────────────────────────────────────────────────────────────────────────
+    ## Delimiter: ","
+    ## dbl (3): lat, lon, p_val
+    ## 
+    ## ℹ Use `spec()` to retrieve the full column specification for this data.
+    ## ℹ Specify the column types or set `show_col_types = FALSE` to quiet this message.
+
+``` r
+ggplot(data = world) +
+  geom_contour(data = dts_exceedance_df %>%
+                 filter(p_val > 0.15) %>%
+                 na.omit(),
+               aes(x = lon,
+                   y = lat,
+                   z = p_val)) +
+  geom_contour_fill(data = dts_exceedance_df %>%
+                      filter(p_val > 0.15) %>%
+                      na.omit(),
+                    aes(x = lon,
+                        y = lat,
+                        z = p_val)) +
+  # geom_tile(data = chisq_n_df %>%
+  #             na.omit(),
+  #           aes(x = lon,
+  #               y = lat,
+  #               colour = p_val)) +
+  scale_fill_viridis_c(option = "cividis") +
+  #scale_color_viridis_c(option = "cividis") +
+  geom_sf(fill = NA) +
+  coord_sf(xlim = c(lon_min, lon_max),
+           ylim = c(lat_min, lat_max),
+           #ylim = c(26, lat_max),
+           expand = FALSE) +
+  guides(fill = guide_colorsteps(title = paste0("p"))) +
+  labs(title = "DTS p-Values for\n Fitted Exceedance Dist.") +
+  theme_bw()
+```
+
+![](assessing_goodness_of_fit_on_livneh_precip_files/figure-gfm/goodness_of_fit_exponential_exceedance_plot-1.png)<!-- -->
 
 ``` r
 # To be placed in overnight scripts ---------------------------------------
@@ -200,6 +390,63 @@ ggplot(data = world) +
 #                                                 lon = (complete_prec_events_df %>% filter(unique_id == id))$lon[1])
 #                                      }) %>% bind_rows()
 # Sys.time() - start_time
+
+
+
+# Scratch plot - density plot of x at chosen points -----------------------
+# subset_of_points <- data.frame(unique_id = complete_prec_events_df$unique_id %>%
+#                                  unique %>%
+#                                  sample(size = 5))
+# 
+# combined_prec_events_df <- complete_prec_events_df %>%
+#   filter(unique_id %in% subset_of_points$unique_id) %>%
+#   select(unique_id, event_number, total) %>%
+#   left_join(generated_prec_events_df %>%
+#               filter(unique_id %in% subset_of_points$unique_id) %>%
+#               select(unique_id, event_number, gen_total),
+#             by = c("unique_id", "event_number")) %>%
+#   select(-event_number) %>%
+#   pivot_longer(cols = c("total", "gen_total"),
+#                values_to = "total",
+#                names_to = "source")
+# 
+# 
+# qq(source ~ total,
+#    data = combined_prec_events_df %>%
+#      filter(unique_id == subset_of_points$unique_id[1]),
+#    aspect = 1,
+#    f.value = seq(0,1, by = 0.01))
+
+# qqmath( ~ total,
+#        data = combined_prec_events_df %>%
+#          filter(unique_id == subset_of_points$unique_id[1]),
+#        distribution = function(probability) {
+#          qgenexp(p = probability,
+#            p_geom = (prec_event_parameters_df %>% 
+#                        filter(unique_id == subset_of_points$unique_id[1]))$p,
+#            q = (prec_event_parameters_df %>%
+#                   filter(unique_id == subset_of_points$unique_id[1]))$q,
+#            b = (prec_event_parameters_df %>%
+#                   filter(unique_id == subset_of_points$unique_id[1]))$b)
+#        },
+#        aspect = 1,
+#        f.value = seq(0, 1, by = 0.01)
+#        )
+
+# p = seq(0, 1, by = 0.01)
+# tot <- (combined_prec_events_df %>%
+#   filter(unique_id == subset_of_points$unique_id[2]))$total
+# gen_tot <-(combined_prec_events_df %>%
+#   filter(unique_id == subset_of_points$unique_id[2]))$gen_total
+# 
+# 
+# ggplot() +
+#   geom_point(aes(x = quantile(tot,p),
+#                  y = quantile(gen_tot,p))) +
+#   scale_x_log10() +
+#   scale_y_log10() +
+#   geom_abline(intercept = 0, slope = 1) +
+#   coord_fixed()
 
 
 # Scratch work ------------------------------------------------------------

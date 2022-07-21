@@ -71,32 +71,32 @@ chisq_n_df <- read_csv("./data/chisq_n_mt.csv", col_names = FALSE) %>%
            convert= TRUE)
 
 #+ goodness_of_fit_chisq_event_length_map
-ggplot(data = world) +
-  geom_contour(data = chisq_n_df %>%
-                 na.omit(),
-               aes(x = lon,
-                   y = lat,
-                   z = p_val)) +
-  geom_contour_fill(data = chisq_n_df %>%
-                      na.omit(),
-                    aes(x = lon,
-                        y = lat,
-                        z = p_val)) +
-  # geom_tile(data = chisq_n_df %>%
-  #             na.omit(),
-  #           aes(x = lon,
-  #               y = lat,
-  #               colour = p_val)) +
-  scale_fill_viridis_c(option = "cividis") +
-  #scale_color_viridis_c(option = "cividis") +
-  geom_sf(fill = NA) +
-  coord_sf(xlim = c(lon_min, lon_max),
-           ylim = c(lat_min, lat_max),
-           #ylim = c(26, lat_max),
-           expand = FALSE) +
-  guides(fill = guide_colorsteps(title = paste0("p"))) +
-  labs(title = "Chisq p-vals for\n Fitted Event Length Dist.") +
-  theme_bw()
+# ggplot(data = world) +
+#   geom_contour(data = chisq_n_df %>%
+#                  na.omit(),
+#                aes(x = lon,
+#                    y = lat,
+#                    z = p_val)) +
+#   geom_contour_fill(data = chisq_n_df %>%
+#                       na.omit(),
+#                     aes(x = lon,
+#                         y = lat,
+#                         z = p_val)) +
+#   # geom_tile(data = chisq_n_df %>%
+#   #             na.omit(),
+#   #           aes(x = lon,
+#   #               y = lat,
+#   #               colour = p_val)) +
+#   scale_fill_viridis_c(option = "cividis") +
+#   #scale_color_viridis_c(option = "cividis") +
+#   geom_sf(fill = NA) +
+#   coord_sf(xlim = c(lon_min, lon_max),
+#            ylim = c(lat_min, lat_max),
+#            #ylim = c(26, lat_max),
+#            expand = FALSE) +
+#   guides(fill = guide_colorsteps(title = paste0("p"))) +
+#   labs(title = "Chisq p-vals for\n Fitted Event Length Dist.") +
+#   theme_bw()
 
 #+ goodness_of_fit_chisq_event_length_tile_map
 ggplot(data = world) +
@@ -293,28 +293,28 @@ ggplot(data = world) +
 
 
 # Scratch plot - density plot of x at chosen points -----------------------
-subset_of_points <- data.frame(unique_id = complete_prec_events_df$unique_id %>%
-                                 unique %>%
-                                 sample(size = 5))
-
-combined_prec_events_df <- complete_prec_events_df %>%
-  filter(unique_id %in% subset_of_points$unique_id) %>%
-  select(unique_id, event_number, total) %>%
-  left_join(generated_prec_events_df %>%
-              filter(unique_id %in% subset_of_points$unique_id) %>%
-              select(unique_id, event_number, gen_total),
-            by = c("unique_id", "event_number")) %>%
-  select(-event_number) %>%
-  pivot_longer(cols = c("total", "gen_total"),
-               values_to = "total",
-               names_to = "source")
-
-
-qq(source ~ total,
-   data = combined_prec_events_df %>%
-     filter(unique_id == subset_of_points$unique_id[1]),
-   aspect = 1,
-   f.value = seq(0,1, by = 0.01))
+# subset_of_points <- data.frame(unique_id = complete_prec_events_df$unique_id %>%
+#                                  unique %>%
+#                                  sample(size = 5))
+# 
+# combined_prec_events_df <- complete_prec_events_df %>%
+#   filter(unique_id %in% subset_of_points$unique_id) %>%
+#   select(unique_id, event_number, total) %>%
+#   left_join(generated_prec_events_df %>%
+#               filter(unique_id %in% subset_of_points$unique_id) %>%
+#               select(unique_id, event_number, gen_total),
+#             by = c("unique_id", "event_number")) %>%
+#   select(-event_number) %>%
+#   pivot_longer(cols = c("total", "gen_total"),
+#                values_to = "total",
+#                names_to = "source")
+# 
+# 
+# qq(source ~ total,
+#    data = combined_prec_events_df %>%
+#      filter(unique_id == subset_of_points$unique_id[1]),
+#    aspect = 1,
+#    f.value = seq(0,1, by = 0.01))
 
 # qqmath( ~ total,
 #        data = combined_prec_events_df %>%
@@ -332,20 +332,20 @@ qq(source ~ total,
 #        f.value = seq(0, 1, by = 0.01)
 #        )
 
-p = seq(0, 1, by = 0.01)
-tot <- (combined_prec_events_df %>%
-  filter(unique_id == subset_of_points$unique_id[2]))$total
-gen_tot <-(combined_prec_events_df %>%
-  filter(unique_id == subset_of_points$unique_id[2]))$gen_total
-
-
-ggplot() +
-  geom_point(aes(x = quantile(tot,p),
-                 y = quantile(gen_tot,p))) +
-  scale_x_log10() +
-  scale_y_log10() +
-  geom_abline(intercept = 0, slope = 1) +
-  coord_fixed()
+# p = seq(0, 1, by = 0.01)
+# tot <- (combined_prec_events_df %>%
+#   filter(unique_id == subset_of_points$unique_id[2]))$total
+# gen_tot <-(combined_prec_events_df %>%
+#   filter(unique_id == subset_of_points$unique_id[2]))$gen_total
+# 
+# 
+# ggplot() +
+#   geom_point(aes(x = quantile(tot,p),
+#                  y = quantile(gen_tot,p))) +
+#   scale_x_log10() +
+#   scale_y_log10() +
+#   geom_abline(intercept = 0, slope = 1) +
+#   coord_fixed()
 
 
 # Scratch work ------------------------------------------------------------
