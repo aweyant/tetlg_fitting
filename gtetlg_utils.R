@@ -43,3 +43,31 @@ rgtetlg <- function(n,q,p,b,rounding = FALSE) {
     return(data.frame(event_length, event_magnitude, event_max))
   }
 }
+
+###########################################
+### CDFS ##################################
+###########################################
+#pgenexp <- function(quantile,
+#                    p,q,b,
+#                    lower.tail = TRUE) {
+#  if(lower.tail == TRUE) {
+#    (1 - (1-q)/(1-p)) * (1 - exp(-b*quantile)) + ((1-q)/(1-p))*(1 - exp(-p*b*quantile))
+#  }
+#  else {
+#    1 - ((1 - (1-q)/(1-p)) * (1 - exp(-b*quantile)) + ((1-q)/(1-p))*(1 - exp(-p*b*quantile)))
+#  }
+#}
+
+#qgenexp <- function(p,
+#                    p_geom,q,b) {
+#  ifelse(p == 0) {
+#    return(0)
+#  }
+#  
+#  B = (1-q)/(1-p_geom)
+#  A = 1 - B
+#  
+#  ((b*(p_geom-1))^(-1)) * log(-(B/A)*(p - A - B))
+#} %>% Vectorize()
+
+

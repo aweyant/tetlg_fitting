@@ -20,8 +20,9 @@ source("./gtetlg_utils.R")
 world <- ne_countries(returnclass = "sf")
 
 # Load datasets -----------------------------------------------------------
-complete_prec_events_df <- read_csv("./data/livneh_unsplit/complete_prec_events.csv")
+complete_prec_events_df <- read_csv("./data/livneh_unsplit/complete_prec_events.csv") 
 
+gc()
 
 # Temporarily use a subset of this data -----------------------------------
 # subset_of_unique_ids <- complete_prec_events_df$unique_id %>%
@@ -33,6 +34,7 @@ complete_prec_events_df <- read_csv("./data/livneh_unsplit/complete_prec_events.
 
 #' **Now, we will fit the GTETLG parameters on each gridcell**
 prec_event_parameters <- complete_prec_events_df %>%
+  na.omit() %>%
   group_by(unique_id) %>%
   summarize(lat = min(lat),
             lon = min(lon),
@@ -42,7 +44,8 @@ prec_event_parameters <- complete_prec_events_df %>%
             p_hat = p_est(length),
             b_hat = b_est(length, total))
 
-#write_csv(x = prec_event_parameters, file = "./data/prec_event_parameters.csv")
+write_csv(x = prec_event_parameters %>% 
+            na.omit(), file = "./data/prec_event_parameters.csv")
 prec_event_parameters <- read_csv(file = "./data/prec_event_parameters.csv")
 
 #' **Maps of parameter estimates**

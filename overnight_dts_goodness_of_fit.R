@@ -4,6 +4,7 @@ library(tidyverse)
 
 # Load needed functions ---------------------------------------------------
 source("./fun_exponential_dts.R")
+source("./create_parallel_backend.R")
 
 # Suppress Unnecessary Warnings -------------------------------------------
 options(dplyr.summarise.inform = FALSE)
@@ -17,8 +18,9 @@ lon_v <- (complete_prec_nc %>% activate("D1") %>% hyper_array())$lon
 # Apply create_events() function ------------------------------------------
 #N = 20
 #for(i in 1:1){
-for(i in (length(lon_v):1)) {
-  start_time <- Sys.time()
+foreach(i = (length(lon_v):1)) %dopar% {
+#for(i in (length(lon_v):1)) {
+  #start_time <- Sys.time()
   #for(j in seq(from = 1, to = length(lat_v) - (N-1), by = N)) {
   #print(lat_v[j:(j+(N-1))])
   complete_prec_events_df <- tidync(x = "./data/livneh_unsplit/complete.prec.nc") %>%
@@ -32,17 +34,18 @@ for(i in (length(lon_v):1)) {
     summarize(p_val = exponential_dts(exceedance)) %>%
     write_csv(file = "./data/dts_exceedance.csv", append = TRUE)
   gc()
-  end_time <- Sys.time()
-  print(end_time-start_time)
+  # end_time <- Sys.time()
+  # print(end_time-start_time)
   #}
-  print(paste0("Progress: ", signif(100 * i/length(lon_v), digits = 2), "%"))
+  #print(paste0("Progress: ", signif(100 * i/length(lon_v), digits = 2), "%"))
 }
+
+parallel::stopCluster(my.cluster)
 
 
 # Rename columns ----------------------------------------------------------
-dts_exceedance <- read_csv("./data/dts_exceedance.csv")
-
-colnames(dts_exceedance) <- c("lat","lon","p_val")
+dts_exceedance <- read_csv("./data/dts_exceedance.csv",
+                           col_names = c("lat","lon","p_val"))
 
 write_csv(x = dts_exceedance, file = "./data/dts_exceedance.csv")
 

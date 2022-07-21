@@ -1,5 +1,5 @@
 #' ---
-#' title: "DTS Goodness of Fit Test for Event Total Distrubtion"
+#' title: "DTS Goodness of Fit Test for Event Max Distrubtion"
 #' output: github_document
 #' ---
 #'
@@ -9,10 +9,13 @@
 # Load packages -----------------------------------------------------------
 library(tidyverse)
 library(twosamples)
+library(parallel)
 
 # Load auxiliary functions ------------------------------------------------
 source("./gtetlg_utils.R")
 source("./fun_dts_wrapper.R")
+#source("./create_parallel_backend.R")
+
 
 # Load files --------------------------------------------------------------
 complete_prec_events_df <- read_csv("./data/livneh_unsplit/complete_prec_events.csv",
@@ -49,9 +52,9 @@ complete_prec_events_df <- read_csv("./data/livneh_unsplit/complete_prec_events.
 
 generated_prec_events_df <- read_csv("./data/livneh_unsplit/generated_prec_events.csv",
                                      lazy = FALSE) %>%
-  rename(gen_length = event_length,
-         gen_total = event_magnitude,
-         gen_max = event_max) %>%
+  #rename(gen_length = event_length,
+  #       gen_total = event_magnitude,
+  #       gen_max = event_max) %>%
   group_by(unique_id) %>%
   mutate(event_number = row_number()) %>%
   ungroup()
@@ -72,48 +75,101 @@ generated_prec_events_df <- read_csv("./data/livneh_unsplit/generated_prec_event
 
 # Event total ------------------------------------------------------------
 gc()
-unique_id_v <- complete_prec_events_df$unique_id %>% unique()
+unique_id_v <- intersect(complete_prec_events_df$unique_id %>% unique(),
+                         generated_prec_events_df$unique_id %>% unique())
+
 lon_v <- complete_prec_events_df$lat %>% unique()
 lat_v <- complete_prec_events_df$lon %>% unique()
 
 unique_id_chunks <- split(unique_id_v,
                           ceiling(seq_along(unique_id_v)/500))
 
-start_time <- Sys.time()
-i = 0
+# start_time <- Sys.time()
+# i = 0
+# for(unique_id_chunk in unique_id_chunks) {
+#   lapply(X = unique_id_chunk,
+#          FUN = function(cur_unique_id){
+#            (
+#              complete_prec_events_df %>%
+#              filter(unique_id == cur_unique_id) %>%
+#              cbind(generated_prec_events_df %>%
+#                      filter(unique_id == cur_unique_id) %>%
+#                      select(gen_total)) %>%
+#              na.omit() %>%
+#              select(total, gen_total, lon, lat) %>%
+#              ungroup() %>%
+#              dts_wrapper(col1_ind = 1, col2_ind = 2,
+#                          nboots = 500))[2] %>%
+#               as.data.frame() %>%
+#               mutate(unique_id = cur_unique_id)
+#          }) %>%
+#     bind_rows() %>%
+#     #print()
+#     write_csv(file = "./data/dts_x.csv", append = TRUE)
+#   
+#   i = i + length(unique_id_chunk)
+#   
+#   if(as.numeric(difftime(Sys.time(), start_time), units = "secs") > (20 * 60)) {
+#     print(paste0(as.numeric(difftime(Sys.time(), start_time), units = "mins"), " minutes have passed."))
+#     start_time = Sys.time()
+#     print(paste0("Progress for the night: ", 
+#                  100 * signif(i/length(unique_id_v), 2),
+#                  "% or iteration ",i,"."))
+#     gc()
+#   }
+#   if(i == length(unique_id_v)){
+#     print(paste0(i, " iterations successfully computed. All done."))
+#   }
+#   i <- i + 1
+# }
+
+combined_events_df <- complete_prec_events_df %>%
+  left_join(generated_prec_events_df %>%
+              select(unique_id, event_number, gen_total),
+            by = c("unique_id", "event_number")) %>%
+  na.omit() %>%
+  select(total, gen_total, lon, lat, unique_id) %>%
+  ungroup()
+
+rm(complete_prec_events_df)
+rm(generated_prec_events_df)
+
+gc()
+
 for(unique_id_chunk in unique_id_chunks) {
   lapply(X = unique_id_chunk,
-         FUN = function(cur_unique_id){
-           (
-             complete_prec_events_df %>%
-             filter(unique_id == cur_unique_id) %>%
-             cbind(generated_prec_events_df %>%
-                     filter(unique_id == cur_unique_id) %>%
-                     select(gen_total)) %>%
-             na.omit() %>%
-             select(total, gen_total, lon, lat) %>%
-             ungroup() %>%
-             dts_wrapper(col1_ind = 1, col2_ind = 2,
-                         nboots = 500))[2] %>%
-              as.data.frame() %>%
-              mutate(unique_id = cur_unique_id)
-         }) %>%
+           FUN = function(cur_unique_id){
+             gc()
+             (combined_events_df %>%
+                 filter(unique_id == cur_unique_id) %>%
+                 as.data.frame() %>%
+                 dts_wrapper(col1_ind = 1, col2_ind = 2,
+                             nboots = 500))[2] %>%
+               as.data.frame() %>%
+               mutate(unique_id = cur_unique_id)
+           }) %>%
     bind_rows() %>%
-    #print()
     write_csv(file = "./data/dts_x.csv", append = TRUE)
-  
-  i = i + length(unique_id_chunk)
-  
-  if(as.numeric(difftime(Sys.time(), start_time), units = "secs") > (20 * 60)) {
-    print(paste0(as.numeric(difftime(Sys.time(), start_time), units = "mins"), " minutes have passed."))
-    start_time = Sys.time()
-    print(paste0("Progress for the night: ", 
-                 100 * signif(i/length(unique_id_v), 2),
-                 "% or iteration ",i,"."))
-    gc()
-  }
-  if(i == length(unique_id_v)){
-    print(paste0(i, " iterations successfully computed. All done."))
-  }
-  i <- i + 1
 }
+
+
+# Test on a single point --------------------------------------------------
+# cur_unique_id = unique_id_v[1]
+# 
+# combined_events_df %>%
+#   filter(unique_id == cur_unique_id) %>%
+#   as.data.frame() %>%
+#   dts_wrapper(col1_ind = 1, col2_ind = 2,
+#               nboots = 2000)
+# 
+# test_df <- combined_events_df %>%
+#   filter(unique_id == cur_unique_id) %>%
+#   as.data.frame()
+# 
+# a_v <- test_df$total
+# b_v <- test_df$gen_total
+# 
+# dts_test(a_v, b_v, nboots = 2000)
+# 
+# dts_wrapper(test_df, col1_ind = 1, col2_ind = 2, nboots = 2000)
+
